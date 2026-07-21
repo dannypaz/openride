@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zwift Ride Fit Calculator</title>
+<style>
+  :root{
+    --paper: #f4f2ec;
+    --paper-raised: #ffffff;
+    --ink: #1c2126;
+    --ink-soft: #565f68;
+    --steel: #3e5c76;
+    --steel-soft: #cdd7e0;
+    --line: #dcd7ca;
+    --accent: #c4571e;
+    --accent-ink: #ffffff;
+    --good: #1f7a45;
+    --good-bg: #e5f2e9;
+    --warn: #92650f;
+    --warn-bg: #faf0da;
+    --bad: #a3352a;
+    --bad-bg: #fae6e3;
+    --shadow: 0 1px 2px rgba(28,33,38,0.06), 0 8px 24px -12px rgba(28,33,38,0.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper: #15181c;
+      --paper-raised: #1d2126;
+      --ink: #e9e6de;
+      --ink-soft: #a2a9b0;
+      --steel: #8ca8c9;
+      --steel-soft: #2b3742;
+      --line: #333a41;
+      --accent: #e0834a;
+      --accent-ink: #17191c;
+      --good: #6cc490;
+      --good-bg: #1c2b21;
+      --warn: #e0b45c;
+      --warn-bg: #2e2916;
+      --bad: #e2887d;
+      --bad-bg: #33201d;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper: #15181c; --paper-raised: #1d2126; --ink: #e9e6de; --ink-soft: #a2a9b0;
+    --steel: #8ca8c9; --steel-soft: #2b3742; --line: #333a41;
+    --accent: #e0834a; --accent-ink: #17191c;
+    --good: #6cc490; --good-bg: #1c2b21; --warn: #e0b45c; --warn-bg: #2e2916;
+    --bad: #e2887d; --bad-bg: #33201d;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  :root[data-theme="light"]{
+    --paper: #f4f2ec; --paper-raised: #ffffff; --ink: #1c2126; --ink-soft: #565f68;
+    --steel: #3e5c76; --steel-soft: #cdd7e0; --line: #dcd7ca;
+    --accent: #c4571e; --accent-ink: #ffffff;
+    --good: #1f7a45; --good-bg: #e5f2e9; --warn: #92650f; --warn-bg: #faf0da;
+    --bad: #a3352a; --bad-bg: #fae6e3;
+    --shadow: 0 1px 2px rgba(28,33,38,0.06), 0 8px 24px -12px rgba(28,33,38,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    line-height: 1.5;
+    padding: 32px 20px 64px;
+  }
+  .wrap{ max-width: 1180px; margin: 0 auto; }
+
+  .mono{ font-family: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  header.masthead{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+    flex-wrap: wrap;
+    border-bottom: 3px solid var(--ink);
+    padding-bottom: 16px;
+    margin-bottom: 28px;
+  }
+  .brand{ display:flex; flex-direction:column; gap:4px; }
+  .brand .kicker{
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700;
+  }
+  h1{
+    margin:0; font-size: 30px; font-weight: 800; letter-spacing: -0.01em;
+    text-transform: uppercase; text-wrap: balance;
+  }
+  .subtitle{ color: var(--ink-soft); font-size: 14px; max-width: 56ch; }
+  .rider-tag{
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 12px; color: var(--ink-soft);
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 4px; padding: 6px 10px; box-shadow: var(--shadow);
+    white-space: nowrap;
+  }
+
+  .verdict{
+    display:flex; align-items:center; gap:14px;
+    padding: 14px 18px; border-radius: 8px; margin-bottom: 28px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow);
+  }
+  .verdict .dot{ width:12px; height:12px; border-radius:50%; flex: none; }
+  .verdict .headline{ font-weight: 700; font-size: 15px; }
+  .verdict .detail{ color: var(--ink-soft); font-size: 13px; }
+
+  .grid{
+    display:grid; grid-template-columns: 380px 1fr; gap: 24px;
+    align-items:start;
+  }
+  @media (max-width: 900px){ .grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+  }
+  .card + .card{ margin-top: 20px; }
+
+  .card h2{
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em;
+    font-weight: 800; color: var(--steel); margin: 0 0 4px;
+  }
+  .card .card-note{ font-size: 12.5px; color: var(--ink-soft); margin: 0 0 16px; }
+
+  .field-row{ display:flex; gap:12px; margin-bottom: 12px; }
+  .field{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+  .field label{ font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+  .field label .letter{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; border-radius:3px; background: var(--steel-soft);
+    color: var(--steel); font-size:10px; font-weight:800; margin-right:6px;
+  }
+  .field input{
+    width: 100%;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 15px; font-variant-numeric: tabular-nums;
+    padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--paper); color: var(--ink);
+  }
+  .field input:focus{ outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field .unit{ font-size: 11px; color: var(--ink-soft); }
+
+  details.reference summary{
+    cursor:pointer; font-size:13px; font-weight:700; color: var(--steel);
+    list-style: none; display:flex; align-items:center; gap:6px;
+  }
+  details.reference summary::-webkit-details-marker{ display:none; }
+  details.reference summary::before{ content: "▸"; font-size:11px; }
+  details.reference[open] summary::before{ content: "▾"; }
+  details.reference{ margin-top: 8px; }
+
+  table.results{ width:100%; border-collapse: collapse; font-size: 13.5px; }
+  table.results th{
+    text-align:left; font-size: 11px; text-transform:uppercase; letter-spacing:0.06em;
+    color: var(--ink-soft); font-weight:700; padding: 6px 10px; border-bottom: 2px solid var(--line);
+  }
+  table.results td{ padding: 10px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.results tr:last-child td{ border-bottom:none; }
+  .letter-chip{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:5px; background: var(--steel-soft);
+    color: var(--steel); font-weight:800; font-size:12px; font-family: ui-monospace, monospace;
+  }
+  .param-label{ font-weight:600; }
+  .param-sub{ color: var(--ink-soft); font-size:12px; }
+  .num{ font-family: ui-monospace, "SF Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .range{ color: var(--ink-soft); }
+  .status-pill{
+    display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius: 20px;
+    font-size:11.5px; font-weight:700; white-space:nowrap;
+  }
+  .status-pill.good{ background: var(--good-bg); color: var(--good); }
+  .status-pill.warn{ background: var(--warn-bg); color: var(--warn); }
+  .status-pill.bad{ background: var(--bad-bg); color: var(--bad); }
+  .status-pill .sw{ width:7px; height:7px; border-radius:50%; background: currentColor; }
+  .howto{ color: var(--ink-soft); font-size: 12.5px; max-width: 34ch; }
+
+  .crank-holes{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .hole{
+    flex: 1; min-width: 70px; text-align:center; padding: 10px 6px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--paper);
+  }
+  .hole .mm{ font-family: ui-monospace, monospace; font-weight:800; font-size:15px; }
+  .hole .tag{ font-size:10px; color: var(--ink-soft); text-transform:uppercase; letter-spacing:0.04em; margin-top:2px;}
+  .hole.selected{ border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--paper)); }
+  .hole.selected .mm{ color: var(--accent); }
+
+  .const-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .const-table th{ text-align:left; font-weight:700; color:var(--ink-soft); font-size:11px; text-transform:uppercase; padding:5px 8px; border-bottom:1px solid var(--line); }
+  .const-table td{ padding:7px 8px; border-bottom:1px solid var(--line); }
+  .const-table tr:last-child td{ border-bottom:none; }
+  .const-table .letter-chip{ width:18px; height:18px; font-size:10.5px; }
+
+  .fitsheet-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:10px 16px; font-size:12.5px; }
+  .fitsheet-grid .k{ color: var(--ink-soft); }
+  .fitsheet-grid .v{ font-family: ui-monospace, monospace; font-weight:600; }
+  .fitsheet-grid .no-transfer{ opacity: 0.55; }
+
+  footer{ margin-top: 40px; font-size:12px; color: var(--ink-soft); border-top:1px solid var(--line); padding-top:16px; }
+  footer a{ color: var(--steel); }
+  .overflow-x{ overflow-x:auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brand">
+      <span class="kicker">Bike Fit &rarr; Zwift Ride Translator</span>
+      <h1>Zwift Ride Fit Calculator</h1>
+      <p class="subtitle">Enter the X/Y coordinates from your professional bike fit and get the exact Zwift&nbsp;Ride adjustment targets — mapped to the lettered dimensions on Zwift's own smart&nbsp;frame geometry chart.</p>
+    </div>
+    <div class="rider-tag" id="riderTag">Loaded: Daniel Pazuchowski &middot; Clubhouse Velo &middot; 7/17/25</div>
+  </header>
+
+  <div class="verdict" id="verdict">
+    <div class="dot" id="verdictDot" style="background:var(--good)"></div>
+    <div>
+      <div class="headline" id="verdictHeadline">Checking fit against frame limits&hellip;</div>
+      <div class="detail" id="verdictDetail"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- LEFT: INPUTS -->
+    <div>
+      <div class="card">
+        <h2>Your Bike Fit</h2>
+        <p class="card-note">From your fit report's BB&#8209;relative coordinates. This is the same reference frame (horizontal / vertical from bottom&nbsp;bracket centre) Zwift uses for the Ride, so these values transfer directly.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label><span class="letter">SX</span>Saddle X</label>
+            <input type="number" id="in_sx" value="185" step="1" />
+            <span class="unit">mm horizontal from BB &rarr; target <b>B</b></span>
+          </div>
+          <div class="field">
+            <label><span class="letter">SY</span>Saddle Y</label>
+            <input type="number" id="in_sy" value="594" step="1" />
+            <span class="unit">mm vertical from BB &rarr; target <b>A</b></span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label><span class="letter">HX</span>Bar Reach</label>
+            <input type="number" id="in_hx" value="440" step="1" />
+            <span class="unit">mm horizontal from BB &rarr; target <b>C</b></span>
+          </div>
+          <div class="field">
+            <label><span class="letter">HY</span>Bar Stack</label>
+            <input type="number" id="in_hy" value="604" step="1" />
+            <span class="unit">mm vertical from BB &rarr; target <b>D</b></span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Saddle Height (fit sheet)</label>
+            <input type="number" id="in_sh" value="661" step="1" />
+            <span class="unit">BB centre &rarr; saddle top &rarr; target <b>E</b></span>
+          </div>
+          <div class="field">
+            <label>Crank Length</label>
+            <input type="number" id="in_crank" value="165" step="0.5" />
+            <span class="unit">mm &rarr; target <b>M</b></span>
+          </div>
+        </div>
+
+        <details class="reference">
+          <summary>Rest of the fit sheet (reference only)</summary>
+          <div class="fitsheet-grid" style="margin-top:12px;">
+            <div><div class="k">Saddle tilt</div><div class="v">-3.3&deg;</div></div>
+            <div><div class="k">Setback (rail position)</div><div class="v">-47mm</div></div>
+            <div><div class="k">Bar drop/rise</div><div class="v">-22mm</div></div>
+            <div><div class="k">Stem length</div><div class="v no-transfer">80mm</div></div>
+            <div><div class="k">Stem angle</div><div class="v no-transfer">-6&deg;</div></div>
+            <div><div class="k">Spacers</div><div class="v no-transfer">32mm</div></div>
+            <div><div class="k">Bar width</div><div class="v no-transfer">38cm</div></div>
+            <div><div class="k">Saddle model</div><div class="v no-transfer">Form Throne RS Ti</div></div>
+          </div>
+          <p class="card-note" style="margin-top:10px;">Faded values belong to your road bike's own stem/bar/saddle hardware — the Ride's cockpit is a single fixed-width bar and fixed saddle, so those numbers don't carry across. Only the BB&#8209;relative X/Y coordinates above do.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- RIGHT: RESULTS -->
+    <div>
+      <div class="card">
+        <h2>Target Settings</h2>
+        <p class="card-note">Where to set each Zwift Ride adjustment so it lands inside the smart frame's lettered range.</p>
+        <div class="overflow-x">
+        <table class="results">
+          <thead>
+            <tr><th></th><th>Parameter</th><th>Target</th><th>Ride range</th><th>Status</th><th>How to adjust</th></tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Crank Length &mdash; Adjustable Crank Arms</h2>
+        <p class="card-note">Bearclaw-style arm, 5 pedal-hole positions. Pick the hole closest to your fit's crank length.</p>
+        <div class="crank-holes" id="crankHoles"></div>
+      </div>
+
+      <div class="card">
+        <h2>Fixed Frame Reference (G&ndash;S)</h2>
+        <p class="card-note">Built into the frame &mdash; not adjustable, shown for context only.</p>
+        <div class="overflow-x">
+        <table class="const-table">
+          <tbody id="constBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Sources: Zwift Ride Smart Frame Geometry chart (rider-supplied) &middot;
+    <a href="https://support.zwift.com/en_us/adjusting-your-zwift-ride-SyUBRM8A" target="_blank" rel="noopener">Adjusting Your Zwift Ride</a> &middot;
+    <a href="https://us.zwift.com/products/zwift-ride-adjustable-crank-arms" target="_blank" rel="noopener">Zwift Ride Adjustable Crank Arms</a>.
+    Measure with a tape from bottom-bracket centre while adjusting &mdash; the Ride's sliders have no printed numbers, only clamp bolts.
+  </footer>
+</div>
+
+<script>
+const RANGES = {
+  A: { label: "Saddle Y", sub: "height from BB", min: 579, max: 830,
+       howto: "Loosen the saddle-height bolt (rear of frame), slide the post, tape-measure from BB centre, retighten to 10 Nm." },
+  B: { label: "Saddle X", sub: "setback from BB", min: 147, max: 251,
+       howto: "Fine-tune with the saddle rail clamp (fore/aft) once height is set &mdash; this moves X independent of Y." },
+  C: { label: "Handlebar Reach", sub: "X from BB", min: 390, max: 510,
+       howto: "Pull the tray mat, loosen the controller-mount bolt, slide fore/aft, retighten to 10 Nm." },
+  D: { label: "Handlebar Stack", sub: "Y from BB", min: 600, max: 761,
+       howto: "Loosen the bolt on the front leg, slide the stem mast up/down, retighten to 10 Nm." },
+  E: { label: "Saddle Height", sub: "BB → saddle top", min: 599, max: 865,
+       howto: "Set by the same height bolt as A &mdash; this is the straight-line check, not a separate control." },
+  F: { label: "Saddle » Bar Drop", sub: "E − D", min: 21, max: 69,
+       howto: "Falls out of A/E and D automatically &mdash; nothing to adjust directly." },
+};
+
+const CONSTANTS = [
+  ["G","Dropout (KICKR CORE)","333.5 mm"],
+  ["H","BB Drop","70.5 mm"],
+  ["I","Chainstay","415 mm"],
+  ["J","BB Height","263 mm"],
+  ["K","Seat Angle","73.5°"],
+  ["L","Head Angle","73.5°"],
+  ["M","Crank Length (stock)","170 mm (160–175 with Adjustable Crank Arms)"],
+  ["N","Stack","536 mm"],
+  ["O","Effective Top Tube","546 mm"],
+  ["P","Standover Height","763.5 mm"],
+  ["Q","Seat Tube C-T","513 mm"],
+  ["R","Top Tube Angle","4.8°"],
+  ["S","Saddle Setback (frame ref.)","20 mm"],
+];
+
+const CRANK_OPTIONS = [160, 165, 170, 172.5, 175];
+
+function status(value, min, max){
+  if (value >= min && value <= max) return "good";
+  const delta = value < min ? (min - value) : (value - max);
+  return delta <= 15 ? "warn" : "bad";
+}
+
+function fmt(n){
+  const r = Math.round(n * 10) / 10;
+  return (Number.isInteger(r) ? r.toFixed(0) : r.toFixed(1));
+}
+
+function render(){
+  const sx = parseFloat(document.getElementById('in_sx').value) || 0;
+  const sy = parseFloat(document.getElementById('in_sy').value) || 0;
+  const hx = parseFloat(document.getElementById('in_hx').value) || 0;
+  const hy = parseFloat(document.getElementById('in_hy').value) || 0;
+  const sh = parseFloat(document.getElementById('in_sh').value) || 0;
+  const crank = parseFloat(document.getElementById('in_crank').value) || 0;
+
+  const eComputed = Math.sqrt(sx*sx + sy*sy);
+  const targets = {
+    A: sy,
+    B: sx,
+    C: hx,
+    D: hy,
+    E: sh || eComputed,
+    F: (sh || eComputed) - hy,
+  };
+
+  const body = document.getElementById('resultsBody');
+  body.innerHTML = '';
+  const statuses = [];
+
+  Object.keys(RANGES).forEach(letter => {
+    const r = RANGES[letter];
+    const val = targets[letter];
+    const st = status(val, r.min, r.max);
+    statuses.push(st);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="letter-chip">${letter}</span></td>
+      <td><div class="param-label">${r.label}</div><div class="param-sub">${r.sub}</div></td>
+      <td class="num">${fmt(val)} mm</td>
+      <td class="num range">${r.min}&ndash;${r.max}</td>
+      <td>${pill(st, val, r)}</td>
+      <td class="howto">${r.howto}</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  // note about E cross-check when both provided
+  if (sh) {
+    const note = document.createElement('tr');
+    note.innerHTML = `<td></td><td colspan="5" class="param-sub" style="padding-top:0;">
+      Fit-sheet saddle height (${fmt(sh)}mm) vs. computed &radic;(X&sup2;+Y&sup2;) from SX/SY (${fmt(eComputed)}mm) &mdash; the gap is expected, since Zwift's 80mm-wide-point reference sits at a slightly different spot on the saddle than a straight seat-tube measurement. Trust the fit-sheet value for <b>E</b>.
+    </td>`;
+    body.appendChild(note);
+  }
+
+  // verdict
+  const worst = statuses.includes('bad') ? 'bad' : (statuses.includes('warn') ? 'warn' : 'good');
+  const dot = document.getElementById('verdictDot');
+  const headline = document.getElementById('verdictHeadline');
+  const detail = document.getElementById('verdictDetail');
+  const colorVar = worst === 'good' ? '--good' : (worst === 'warn' ? '--warn' : '--bad');
+  dot.style.background = `var(${colorVar})`;
+  if (worst === 'good') {
+    headline.textContent = 'Fully achievable on the Zwift Ride.';
+    detail.textContent = 'Every target lands inside the frame’s adjustable range — slide to the numbers on the right.';
+  } else if (worst === 'warn') {
+    headline.textContent = 'Close, with a small compromise.';
+    detail.textContent = 'One or more targets sit just outside the frame’s range — you’ll rack out to the nearest limit stop.';
+  } else {
+    headline.textContent = 'Outside the frame’s range — bigger compromise needed.';
+    detail.textContent = 'At least one target misses by more than 15mm. You’ll need to rack to the frame limit and accept the difference.';
+  }
+
+  // crank holes
+  const crankWrap = document.getElementById('crankHoles');
+  crankWrap.innerHTML = '';
+  let nearest = CRANK_OPTIONS[0], nearestDelta = Infinity;
+  CRANK_OPTIONS.forEach(opt => {
+    const d = Math.abs(opt - crank);
+    if (d < nearestDelta) { nearestDelta = d; nearest = opt; }
+  });
+  CRANK_OPTIONS.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'hole' + (opt === nearest ? ' selected' : '');
+    div.innerHTML = `<div class="mm">${opt}mm</div><div class="tag">${opt === nearest ? 'closest to fit' : 'hole'}</div>`;
+    crankWrap.appendChild(div);
+  });
+}
+
+function pill(st, val, r){
+  const label = st === 'good' ? 'In range' : (st === 'warn' ? 'Borderline' : 'Out of range');
+  return `<span class="status-pill ${st}"><span class="sw"></span>${label}</span>`;
+}
+
+function buildConstants(){
+  const body = document.getElementById('constBody');
+  CONSTANTS.forEach(([letter,label,value]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="letter-chip">${letter}</span></td><td>${label}</td><td class="num">${value}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+document.querySelectorAll('input').forEach(inp => inp.addEventListener('input', render));
+buildConstants();
+render();
+</script>
+</body>
+</html>
