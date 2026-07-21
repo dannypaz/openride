@@ -185,6 +185,7 @@
   .note-box.good{ background: var(--good-bg); color: var(--good); }
   .note-box.warn{ background: var(--warn-bg); color: var(--warn); }
   .note-box.bad{ background: var(--bad-bg); color: var(--bad); }
+  .note-box.info{ background: var(--steel-soft); color: var(--steel); }
   .note-box b{ font-weight:800; }
   .derived-note{
     margin-top: 14px; font-size:12.5px; color: var(--ink-soft);
@@ -204,6 +205,7 @@
   .status-pill.good{ background: var(--good-bg); color: var(--good); }
   .status-pill.warn{ background: var(--warn-bg); color: var(--warn); }
   .status-pill.bad{ background: var(--bad-bg); color: var(--bad); }
+  .status-pill.info{ background: var(--steel-soft); color: var(--steel); }
   .status-pill .sw{ width:7px; height:7px; border-radius:50%; background: currentColor; }
 
   .crank-holes{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
@@ -239,7 +241,7 @@
     <div class="brand">
       <span class="kicker">Bike Fit &rarr; Zwift Ride Translator</span>
       <h1>Zwift Ride Fit Calculator</h1>
-      <p class="subtitle">The Ride only has three physical adjustments: saddle height, handlebar height, and handlebar reach. Enter your fit's BB&#8209;relative coordinates and this works out where to set each one, checked against Zwift's smart&nbsp;frame geometry limits.</p>
+      <p class="subtitle">Five things move on a Zwift&nbsp;Ride: saddle height, saddle fore/aft, saddle tilt, handlebar height, and handlebar reach. Enter your fit's BB&#8209;relative coordinates and this works out where to set each one, checked against Zwift's smart&nbsp;frame geometry limits.</p>
     </div>
     <div class="rider-tag" id="riderTag">Loaded: Daniel Pazuchowski &middot; Clubhouse Velo &middot; 7/17/25</div>
   </header>
@@ -264,12 +266,12 @@
           <div class="field">
             <label><span class="letter">SX</span>Saddle X</label>
             <input type="number" id="in_sx" value="185" step="1" />
-            <span class="unit">mm horizontal from BB &mdash; combines with SY below</span>
+            <span class="unit">mm horizontal from BB &rarr; target <b>B</b></span>
           </div>
           <div class="field">
             <label><span class="letter">SY</span>Saddle Y</label>
             <input type="number" id="in_sy" value="594" step="1" />
-            <span class="unit">mm vertical from BB &mdash; drives saddle height</span>
+            <span class="unit">mm vertical from BB &mdash; cross-check for <b>E</b></span>
           </div>
         </div>
 
@@ -290,8 +292,16 @@
           <div class="field">
             <label>Saddle Height (fit sheet)</label>
             <input type="number" id="in_sh" value="661" step="1" />
-            <span class="unit" id="shCompare">BB &rarr; saddle top, for comparison only</span>
+            <span class="unit" id="shCompare">BB &rarr; saddle top &rarr; target <b>E</b></span>
           </div>
+          <div class="field">
+            <label>Saddle Tilt</label>
+            <input type="number" id="in_tilt" value="-3.3" step="0.1" />
+            <span class="unit">degrees, nose up positive</span>
+          </div>
+        </div>
+
+        <div class="field-row">
           <div class="field">
             <label>Crank Length</label>
             <input type="number" id="in_crank" value="165" step="0.5" />
@@ -302,7 +312,6 @@
         <details class="reference">
           <summary>Rest of the fit sheet (reference only)</summary>
           <div class="fitsheet-grid" style="margin-top:12px;">
-            <div><div class="k">Saddle tilt</div><div class="v">-3.3&deg;</div></div>
             <div><div class="k">Setback (rail position)</div><div class="v">-47mm</div></div>
             <div><div class="k">Bar drop/rise</div><div class="v">-22mm</div></div>
             <div><div class="k">Stem length</div><div class="v no-transfer">80mm</div></div>
@@ -320,7 +329,7 @@
     <div>
       <div class="card">
         <h2>Target Settings</h2>
-        <p class="card-note">The Ride has exactly three adjustments. Saddle fore/aft isn't one of them &mdash; the frame's seat tube is fixed at 73.5&deg; (<span class="letter-chip" style="width:16px;height:16px;font-size:9px;">K</span>), so raising or lowering the saddle moves height and setback together, as one slide. We solve for the height your fit calls for, then show the setback you'll actually land on.</p>
+        <p class="card-note">Height, stack and reach ride on bolts with a fixed track &mdash; tape-measure from BB centre and you'll land exactly on target. The saddle's fore/aft clamp and tilt bolt have no printed scale, so treat those two as estimates: set roughly, ride a lap, nudge to feel.</p>
         <div id="steps"></div>
         <div id="dropNote"></div>
       </div>
@@ -347,19 +356,13 @@
     Sources: Zwift Ride Smart Frame Geometry chart (rider-supplied) &middot;
     <a href="https://support.zwift.com/en_us/adjusting-your-zwift-ride-SyUBRM8A" target="_blank" rel="noopener">Adjusting Your Zwift Ride</a> &middot;
     <a href="https://us.zwift.com/products/zwift-ride-adjustable-crank-arms" target="_blank" rel="noopener">Zwift Ride Adjustable Crank Arms</a>.
-    Measure with a tape from bottom-bracket centre while adjusting &mdash; the Ride's sliders have no printed numbers, only clamp bolts.
+    Measure with a tape from bottom-bracket centre while adjusting &mdash; none of the Ride's adjustments have printed numbers, only clamp bolts. The saddle fore/aft and tilt clamps are the roughest of the five since there's no fixed track to measure along.
   </footer>
 </div>
 
 <script>
-// The Ride's saddle is one slide along a fixed 73.5° seat tube (K), not two
-// independent controls — MIN/MAX on the geometry chart are the two ends of
-// that single track. A (Y) and B (X) are its components, not separate dials.
-const SADDLE_TRACK = {
-  A0: 579, A1: 830,   // Saddle Y (height component), mm from BB
-  B0: 147, B1: 251,   // Saddle X (setback component), mm from BB
-  E0: 599, E1: 865,   // Saddle Height (straight BB→saddle-top tape measurement)
-};
+const HEIGHT = { min: 599, max: 865 };   // E — saddle height, straight BB→saddle-top tape measurement
+const SETBACK = { min: 147, max: 251 };  // B — saddle X, fore/aft rail clamp (no printed scale)
 const REACH  = { min: 390, max: 510 };   // C — handlebar reach, X from BB
 const STACK  = { min: 600, max: 761 };   // D — handlebar stack/height, Y from BB
 const DROP   = { min: 21,  max: 69  };   // F — saddle-to-bar drop, derived (E − D)
@@ -388,37 +391,38 @@ function status(value, min, max){
   return delta <= 15 ? "warn" : "bad";
 }
 
-// Severity for a compromise that isn't a hard limit (e.g. resulting setback
-// error) — smaller tolerance bands since there's no "rack to the stop" fix.
-function deltaSeverity(deltaAbs){
-  if (deltaAbs <= 10) return "good";
-  return deltaAbs <= 25 ? "warn" : "bad";
-}
-
 function fmt(n){
   const r = Math.round(n * 10) / 10;
   return (Number.isInteger(r) ? r.toFixed(0) : r.toFixed(1));
 }
 
 function pill(st){
+  if (st === 'info') return `<span class="status-pill info"><span class="sw"></span>Preference</span>`;
   const label = st === 'good' ? 'In range' : (st === 'warn' ? 'Borderline' : 'Out of range');
   return `<span class="status-pill ${st}"><span class="sw"></span>${label}</span>`;
 }
 
-function step(num, letter, title, sub, targetMm, range, st, howto, extraHtml){
+// range/st/unit are optional — omit them for a preference-only step (e.g.
+// saddle tilt) that has no Zwift-defined range to check against.
+function step(num, letter, title, sub, targetVal, range, st, howto, extraHtml, unit){
+  unit = unit || 'mm';
+  const rangeBlock = range
+    ? `<div class="vgroup"><div class="vlabel">Ride range</div><div class="num range">${range}</div></div>`
+    : '';
+  const letterChip = letter ? `<span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">${letter}</span>` : '';
   return `
     <div class="step">
       <div class="step-head">
         <div class="step-title-row">
           <span class="step-num">${num}</span>
           <div>
-            <div class="step-title">${title} <span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">${letter}</span></div>
+            <div class="step-title">${title} ${letterChip}</div>
             <div class="step-sub">${sub}</div>
           </div>
         </div>
         <div class="step-values">
-          <div class="vgroup"><div class="vlabel">Set to</div><div class="num vnum">${fmt(targetMm)} mm</div></div>
-          <div class="vgroup"><div class="vlabel">Ride range</div><div class="num range">${range}</div></div>
+          <div class="vgroup"><div class="vlabel">Set to</div><div class="num vnum">${fmt(targetVal)} ${unit}</div></div>
+          ${rangeBlock}
           ${pill(st)}
         </div>
       </div>
@@ -434,20 +438,17 @@ function render(){
   const hx = parseFloat(document.getElementById('in_hx').value) || 0;
   const hy = parseFloat(document.getElementById('in_hy').value) || 0;
   const sh = parseFloat(document.getElementById('in_sh').value) || 0;
+  const tilt = parseFloat(document.getElementById('in_tilt').value) || 0;
   const crank = parseFloat(document.getElementById('in_crank').value) || 0;
 
-  const { A0, A1, B0, B1, E0, E1 } = SADDLE_TRACK;
+  // Saddle height (bolt, precise) and saddle fore/aft (rail clamp, no printed
+  // scale) are two separate, independent controls on the Ride.
+  const eTarget = sh || Math.sqrt(sx * sx + sy * sy);
+  const heightStatus = status(eTarget, HEIGHT.min, HEIGHT.max);
+  const achievedE = Math.min(HEIGHT.max, Math.max(HEIGHT.min, eTarget));
 
-  // Saddle height (Y) is prioritized — it matters far more for knee
-  // extension/injury risk than setback, so we solve the one-DOF slide for
-  // height and accept whatever setback falls out.
-  const heightStatus = status(sy, A0, A1);
-  const t = Math.min(1, Math.max(0, (sy - A0) / (A1 - A0)));
-  const achievedA = A0 + t * (A1 - A0);
-  const achievedB = B0 + t * (B1 - B0);
-  const achievedE = E0 + t * (E1 - E0);
-  const setbackDelta = achievedB - sx;
-  const setbackSt = deltaSeverity(Math.abs(setbackDelta));
+  const setbackStatus = status(sx, SETBACK.min, SETBACK.max);
+  const achievedB = Math.min(SETBACK.max, Math.max(SETBACK.min, sx));
 
   const reachStatus = status(hx, REACH.min, REACH.max);
   const achievedC = Math.min(REACH.max, Math.max(REACH.min, hx));
@@ -458,44 +459,38 @@ function render(){
   const dropVal = achievedE - achievedD;
   const dropStatus = status(dropVal, DROP.min, DROP.max);
 
-  let heightNote = '';
-  if (heightStatus !== 'good') {
-    heightNote = `<div class="note-box ${heightStatus}">Your fit's saddle height (${fmt(sy)}mm) is outside the frame's ${A0}&ndash;${A1}mm range &mdash; you'll rack to <b>${fmt(achievedA)}mm</b> instead, ${fmt(Math.abs(sy - achievedA))}mm off.</div>`;
-  }
+  const setbackHowto = 'Loosen the saddle rail clamp and slide it fore/aft. No printed scale here — tape-measure horizontally from BB centre to the saddle’s 80mm-wide point and iterate until close, then retighten.';
+  const setbackInfo = `<div class="note-box info">Estimate, then verify by feel &mdash; this clamp has no marked positions, so expect a lap or two of fine-tuning.</div>`;
 
-  let setbackNote;
-  if (setbackSt === 'good') {
-    setbackNote = `<div class="note-box good">Resulting fore/aft position: <b>${fmt(achievedB)} mm</b> &mdash; within ${fmt(Math.abs(setbackDelta))}mm of your fit's ${fmt(sx)}mm. Close enough to ignore.</div>`;
-  } else {
-    const dir = setbackDelta < 0 ? 'less setback (saddle sits further forward)' : 'more setback (saddle sits further back)';
-    setbackNote = `<div class="note-box ${setbackSt}">Because saddle X/Y aren't independently adjustable, dialing in this height also fixes your fore/aft position at <b>${fmt(achievedB)} mm</b> &mdash; about <b>${fmt(Math.abs(setbackDelta))}mm ${dir}</b> than your fit's ${fmt(sx)}mm. There's no fore/aft clamp to correct this on the Ride.</div>`;
-  }
+  const tiltHowto = 'Same rail clamp controls tilt. Match the angle with a smartphone level app (rest it on the saddle rails or top) &mdash; most clamps allow roughly &plusmn;3&deg; of adjustment.';
 
   const steps = [
-    step(1, 'E', 'Saddle Height', 'Tape-measure BB centre &rarr; saddle top', achievedE, `${E0}&ndash;${E1}`, heightStatus,
-      'Loosen the saddle-height bolt (rear of frame), slide the post, tape-measure from BB centre, retighten to 10&nbsp;Nm.',
-      heightNote + setbackNote),
-    step(2, 'D', 'Handlebar Height', 'Stack &mdash; vertical, measured from BB', achievedD, `${STACK.min}&ndash;${STACK.max}`, stackStatus,
+    step(1, 'E', 'Saddle Height', 'Tape-measure BB centre &rarr; saddle top', achievedE, `${HEIGHT.min}&ndash;${HEIGHT.max}`, heightStatus,
+      'Loosen the saddle-height bolt (rear of frame), slide the post, tape-measure from BB centre, retighten to 10&nbsp;Nm.'),
+    step(2, 'B', 'Saddle Fore/Aft', 'Setback, horizontal from BB', achievedB, `${SETBACK.min}&ndash;${SETBACK.max}`, setbackStatus,
+      setbackHowto, setbackInfo),
+    step(3, '', 'Saddle Tilt', 'Nose angle', tilt, '', 'info', tiltHowto, '', '&deg;'),
+    step(4, 'D', 'Handlebar Height', 'Stack &mdash; vertical, measured from BB', achievedD, `${STACK.min}&ndash;${STACK.max}`, stackStatus,
       'Loosen the bolt on the front leg, slide the stem mast up/down, retighten to 10&nbsp;Nm.'),
-    step(3, 'C', 'Handlebar Reach', 'Horizontal, measured from BB', achievedC, `${REACH.min}&ndash;${REACH.max}`, reachStatus,
+    step(5, 'C', 'Handlebar Reach', 'Horizontal, measured from BB', achievedC, `${REACH.min}&ndash;${REACH.max}`, reachStatus,
       'Pull the tray mat off, loosen the controller-mount bolt, slide fore/aft, retighten to 10&nbsp;Nm.'),
   ];
   document.getElementById('steps').innerHTML = steps.join('');
 
   if (sh) {
     document.getElementById('shCompare').innerHTML =
-      `fit sheet: ${fmt(sh)}mm &middot; you'll tape-measure ~${fmt(achievedE)}mm on the Ride`;
+      `BB &rarr; saddle top &rarr; target <b>E</b> &middot; &radic;(X&sup2;+Y&sup2;) from SX/SY &asymp; ${fmt(Math.sqrt(sx*sx+sy*sy))}mm`;
   }
 
   document.getElementById('dropNote').innerHTML = `
     <span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">F</span>
-    Saddle&rarr;bar drop once 1&ndash;3 are set: <span class="num">${fmt(dropVal)} mm</span>
+    Saddle&rarr;bar drop once 1 &amp; 4 are set: <span class="num">${fmt(dropVal)} mm</span>
     <span class="range">(${DROP.min}&ndash;${DROP.max})</span> ${pill(dropStatus)}
     &mdash; falls out automatically, nothing to adjust directly.
   `;
 
-  // verdict — height must be achievable, setback compromise + reach/stack fit all matter
-  const statuses = [heightStatus, setbackSt, reachStatus, stackStatus, dropStatus];
+  // verdict — the four Zwift-specified ranges drive it; tilt has no range to fail
+  const statuses = [heightStatus, setbackStatus, reachStatus, stackStatus, dropStatus];
   const worst = statuses.includes('bad') ? 'bad' : (statuses.includes('warn') ? 'warn' : 'good');
   const dot = document.getElementById('verdictDot');
   const headline = document.getElementById('verdictHeadline');
@@ -504,13 +499,13 @@ function render(){
   dot.style.background = `var(${colorVar})`;
   if (worst === 'good') {
     headline.textContent = 'Fully achievable on the Zwift Ride.';
-    detail.textContent = 'Height, reach and stack all land inside range, and the resulting setback is close enough to your fit to ignore.';
+    detail.textContent = 'Height, setback, reach and stack all land inside range — dial in the five steps below.';
   } else if (worst === 'warn') {
     headline.textContent = 'Close, with a small compromise.';
-    detail.textContent = 'One setting sits near a frame limit, or the coupled setback lands a bit off your fit — see the flagged step below.';
+    detail.textContent = 'One setting sits just outside a frame limit — you’ll rack out to the nearest stop. See the flagged step below.';
   } else {
     headline.textContent = 'A real compromise on this frame.';
-    detail.textContent = 'Either a target is well outside the frame’s range, or the coupled setback is off by more than 25mm — see the flagged step below.';
+    detail.textContent = 'At least one target misses its range by more than 15mm — see the flagged step below.';
   }
 
   // crank holes
