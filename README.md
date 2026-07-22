@@ -17,19 +17,16 @@ report your position as four numbers, all measured from the bottom bracket
 
 Zwift's own "Smart Frame Geometry" chart for the Ride specifies its
 adjustable range using **the same BB-relative coordinate system**, just with
-different labels:
+different labels (SX&rarr;B, HX&rarr;C, HY&rarr;D), so those numbers carry
+over with no conversion. That equivalence is the starting point; the rest of
+the calculator is about how you actually *set* each one on the physical frame.
 
-| Fit value | Zwift letter | Zwift meaning |
-|---|---|---|
-| SX | **B** | Saddle X |
-| SY | *(cross-check only, see below)* | Saddle Y |
-| HX | **C** | Handlebar Reach |
-| HY | **D** | Handlebar Stack |
-
-Because both systems use the same reference point and axes, **the numbers
-carry over with no conversion** — SX is your target for B, HX is your target
-for C, and so on. That equivalence is the whole trick; everything else in
-the calculator is just range-checking and unit bookkeeping around it.
+Three of the Ride's five adjustments turn out to be printed with a letter
+scale directly on the frame (confirmed on a real unit): **saddle height**
+(on the seatpost) and **handlebar height** and **handlebar reach** (on the
+handlebar mast/mount), each spaced **10mm per letter, with A at the shortest
+position**. The other two — **saddle fore/aft** and **saddle tilt** — share
+one rail clamp with no printed scale at all.
 
 ## The formulas
 
@@ -38,7 +35,6 @@ your fit's own BB&rarr;saddle-top measurement, if it reports one):
 
 ```
 E (Saddle Height)     = saddleHeight, or √(SX² + SY²) if saddleHeight is blank
-B (Saddle Fore/Aft)   = SX
 C (Handlebar Reach)   = HX
 D (Handlebar Stack)   = HY
 F (Saddle→Bar Drop)   = clamp(E) − clamp(D)      // derived, not a control
@@ -51,8 +47,47 @@ fit sheet's own printed saddle-height number — fit systems and Zwift's
 saddle, so expect a few mm of difference. Prefer the fit sheet's own number
 for `E` when you have it.
 
-Each target is clamped to the Ride's range and compared against your raw
-(unclamped) input to produce a status:
+### Turning a target into a letter (E, D, C)
+
+These three ride on a physical 10mm-per-letter scale, A = shortest:
+
+```
+letterIndex = round((target − rangeMin) / 10)     // 0 = A, 1 = B, 2 = C, ...
+markMM      = rangeMin + letterIndex × 10          // the mm the letter actually sits at
+```
+
+The app shows both the letter *and* `markMM` next to your raw target, since
+snapping to a 10mm step means up to &plusmn;5mm of rounding either way.
+
+### Saddle Fore/Aft (B) — no letter scale
+
+This is the one the letters don't cover, and it's not a simple independent
+target either. Zwift's chart lists Saddle X as **147&ndash;251mm**, but that's
+the combined envelope across the *entire* saddle-height range, not one
+clamp's independent travel. As you raise or lower the saddle (the lettered
+height adjustment), the seatpost's fixed 73.5&deg; angle drags a "neutral"
+setback along with it:
+
+```
+t         = clamp((SY − 579) / (830 − 579), 0, 1)   // 0 at min height, 1 at max
+neutralB  = 147 + t × (251 − 147)                    // where the height slide alone puts you
+```
+
+On top of that neutral point, the saddle's fore/aft rail clamp gives roughly
+**&plusmn;17.5mm** of independent, saddle-rail-dependent fine-tune (confirmed
+centred, not one-directional — though the exact total travel varies by
+saddle model, nominally ~35mm):
+
+```
+achievedB = clamp(SX, neutralB − 17.5, neutralB + 17.5)
+```
+
+If your fit's `SX` falls outside that &plusmn;17.5mm window, the closest
+you can get is whichever end of the window is nearer — the app reports the
+shortfall in mm. There's no scale to read here, so measure it with a plumb
+line (see below) rather than a tape pulled directly between the two points.
+
+### Status thresholds
 
 ```
 status(value, min, max):
@@ -61,15 +96,16 @@ status(value, min, max):
   bad   — outside the range by more than 15mm
 ```
 
-### The Ride's ranges (from Zwift's Smart Frame Geometry chart)
+### The Ride's ranges (from Zwift's Smart Frame Geometry chart, cross-checked
+against the product spec page and geometrygeeks.bike)
 
-| Letter | Meaning | Min | Max |
-|---|---|---|---|
-| E | Saddle Height (BB &rarr; saddle top) | 599mm | 865mm |
-| B | Saddle X (setback) | 147mm | 251mm |
-| C | Handlebar Reach | 390mm | 510mm |
-| D | Handlebar Stack | 600mm | 761mm |
-| F | Saddle&rarr;Bar Drop (derived) | 21mm | 69mm |
+| Letter | Meaning | Min | Max | Scale |
+|---|---|---|---|---|
+| E | Saddle Height (BB &rarr; saddle top) | 599mm | 865mm | Lettered, 10mm/letter |
+| B | Saddle X (setback) | 147mm | 251mm | No scale — see above |
+| C | Handlebar Reach | 390mm | 510mm | Lettered, 10mm/letter |
+| D | Handlebar Stack | 600mm | 761mm | Lettered, 10mm/letter |
+| F | Saddle&rarr;Bar Drop (derived) | 21mm | 69mm | Derived |
 
 Everything else on the chart (chainstay, BB drop, seat/head angle, etc.) is
 fixed frame geometry, not adjustable — shown in the "Fixed Frame Reference"
@@ -79,7 +115,9 @@ table for context only.
 
 Zwift doesn't publish a tilt range, so tilt is a straight passthrough of
 your fit's own saddle angle (degrees, nose-up positive) with no in/out-of-range
-check — the UI shows it as "Preference" rather than a pass/fail.
+check — the UI shows it as "Preference" rather than a pass/fail. It shares
+the same rail clamp as fore/aft and has no scale either; match it with a
+smartphone level app.
 
 ### Crank length
 
@@ -98,13 +136,15 @@ const SETBACK = { min: 147, max: 251 };
 const REACH   = { min: 390, max: 510 };
 const STACK   = { min: 600, max: 761 };
 const DROP    = { min: 21,  max: 69  };
+const LETTER_STEP_MM   = 10;    // mm per printed letter
+const RAIL_HALF_WINDOW = 17.5;  // half of the fore/aft rail clamp's nominal travel
 const CRANK_OPTIONS = [160, 165, 170, 172.5, 175];
 ```
 
 If Zwift revises the Ride's geometry, or you're adapting this for a
-different smart frame with its own published BB-relative range chart, only
-these constants (plus the `CONSTANTS` reference table just below them) need
-to change — the rest of the logic is frame-agnostic.
+different smart frame with its own printed letter scale and range chart,
+only these constants (plus the `CONSTANTS` reference table just below them)
+need to change — the rest of the logic is frame-agnostic.
 
 ## Measuring your own fit's BB-relative coordinates
 
@@ -121,6 +161,9 @@ app for the full plumb-line procedure with a diagram.
 
 ## Sources
 
+- [Zwift Ride Smart Frame product page](https://us.zwift.com/products/zwift-ride-smart-frame)
 - [Adjusting Your Zwift Ride](https://support.zwift.com/en_us/adjusting-your-zwift-ride-SyUBRM8A)
 - [Zwift Ride Adjustable Crank Arms](https://us.zwift.com/products/zwift-ride-adjustable-crank-arms)
+- [Geometry Details: Zwift Smart Frame 2025 — geometrygeeks.bike](https://geometrygeeks.bike/bike/zwift-smart-frame-2025/) (independent cross-check of the range chart, plus the "Saddle Fore/Aft rail slide only: 35mm" figure)
 - Zwift Ride Smart Frame Geometry chart (rider-supplied)
+- Letter-scale spacing and saddle-fore/aft behavior confirmed directly by the rider on their own frame

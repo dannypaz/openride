@@ -249,7 +249,7 @@
     <div class="brand">
       <span class="kicker">Bike Fit &rarr; Zwift Ride Translator</span>
       <h1>Zwift Ride Fit Calculator</h1>
-      <p class="subtitle">Five things move on a Zwift&nbsp;Ride: saddle height, saddle fore/aft, saddle tilt, handlebar height, and handlebar reach. Enter your fit's BB&#8209;relative coordinates and this works out where to set each one, checked against Zwift's smart&nbsp;frame geometry limits.</p>
+      <p class="subtitle">Five things move on a Zwift&nbsp;Ride: saddle height, saddle fore/aft, saddle tilt, handlebar height, and handlebar reach. Three ride on printed letter scales (10mm per letter, A = shortest) &mdash; enter your fit's BB&#8209;relative coordinates and this works out which letter to slide to for each.</p>
     </div>
     <div class="rider-tag" id="riderTag">Loaded: Daniel Pazuchowski &middot; Clubhouse Velo &middot; 7/17/25</div>
   </header>
@@ -270,34 +270,50 @@
           Most professional fits report your position as BB&#8209;relative X/Y &mdash;
           horizontal and vertical distance from the bottom&nbsp;bracket centre.
           Zwift's own geometry chart for the Ride uses that <b>same</b> coordinate
-          system, just under different letters, so the numbers carry over with
-          no conversion:
+          system under different letters, so the numbers carry over directly. Three
+          of the five adjustments are printed with a letter scale on the frame
+          itself (10mm per letter, A = the shortest position) &mdash; for those,
+          the target mm is snapped to the nearest letter:
         </p>
         <div class="overflow-x">
         <table class="const-table" style="margin-bottom:12px;">
           <thead>
-            <tr><th>Target</th><th>Formula</th><th>Ride range</th></tr>
+            <tr><th>Target</th><th>Formula</th><th>Ride range</th><th>Scale</th></tr>
           </thead>
           <tbody>
-            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">E</span> Saddle Height</td><td class="num">fit's saddle height, or &radic;(SX&sup2;+SY&sup2;)</td><td class="num range">599&ndash;865mm</td></tr>
-            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">B</span> Saddle Fore/Aft</td><td class="num">= SX</td><td class="num range">147&ndash;251mm</td></tr>
-            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">C</span> Handlebar Reach</td><td class="num">= HX</td><td class="num range">390&ndash;510mm</td></tr>
-            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">D</span> Handlebar Stack</td><td class="num">= HY</td><td class="num range">600&ndash;761mm</td></tr>
-            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">F</span> Saddle&rarr;Bar Drop</td><td class="num">= E &minus; D (clamped)</td><td class="num range">21&ndash;69mm</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">E</span> Saddle Height</td><td class="num">fit's saddle height, or &radic;(SX&sup2;+SY&sup2;)</td><td class="num range">599&ndash;865mm</td><td>Lettered</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">B</span> Saddle Fore/Aft</td><td class="num">= SX, within &plusmn;17.5mm of the height-coupled centre</td><td class="num range">147&ndash;251mm envelope</td><td>No scale</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">C</span> Handlebar Reach</td><td class="num">= HX</td><td class="num range">390&ndash;510mm</td><td>Lettered</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">D</span> Handlebar Stack</td><td class="num">= HY</td><td class="num range">600&ndash;761mm</td><td>Lettered</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">F</span> Saddle&rarr;Bar Drop</td><td class="num">= E &minus; D (clamped)</td><td class="num range">21&ndash;69mm</td><td>Derived</td></tr>
           </tbody>
         </table>
         </div>
+        <p class="card-note" style="margin-bottom:12px;">
+          <b>Lettered targets (E, D, C):</b> letter index = round((target &minus;
+          range&nbsp;min) &divide; 10), then A=index 0, B=1, C=2&hellip;. Shown
+          alongside the mm mark that letter actually sits at, since 10mm steps
+          mean up to &plusmn;5mm of rounding.
+        </p>
+        <p class="card-note" style="margin-bottom:12px;">
+          <b>Saddle Fore/Aft (B) has no letter scale.</b> The 147&ndash;251mm
+          range on Zwift's chart is the combined envelope across the <i>entire</i>
+          height range, not a single clamp's independent travel &mdash; raising or
+          lowering the saddle (step 1) shifts a "neutral" setback along that
+          envelope automatically (linear between the chart's min/max). The
+          fore/aft rail clamp then gives roughly &plusmn;17.5mm of independent,
+          saddle-rail-dependent fine-tune centred on that neutral point &mdash;
+          measured with a plumb line (see step 2), since there's no scale to read.
+        </p>
         <p class="card-note" style="margin-bottom:0;">
-          Each target is clamped to its range, then compared against your raw
-          input: <b>in range</b> if it fits directly, <b>borderline</b> if it
-          misses by &le;15mm (you'll rack to the limit stop), <b>out of range</b>
-          beyond that. Saddle tilt has no Zwift-defined range, so it's passed
-          through as-is and flagged "Preference." Crank length is matched to the
-          nearest of the Adjustable Crank Arms' five holes (160/165/170/172.5/175mm).
-          All of these numbers &mdash; and the Ride's own fixed ranges above &mdash;
-          live as plain constants at the top of the page's script, so you can
-          repoint them at a different frame or a revised geometry chart. Full
-          writeup in this repo's <code>README.md</code>.
+          Status: <b>in range</b> if the target fits directly, <b>borderline</b>
+          if it misses by &le;15mm, <b>out of range</b> beyond that. Saddle tilt
+          has no Zwift-defined range, so it's passed through as-is and flagged
+          "Preference." Crank length is matched to the nearest of the Adjustable
+          Crank Arms' five holes (160/165/170/172.5/175mm). All of these numbers
+          &mdash; letter step size, rail window, ranges &mdash; live as plain
+          constants at the top of the page's script. Full writeup in this repo's
+          <code>README.md</code>.
         </p>
       </div>
     </details>
@@ -353,7 +369,7 @@
         <div class="field-row">
           <div class="field">
             <label>Crank Length</label>
-            <input type="number" id="in_crank" value="165" step="0.5" />
+            <input type="number" id="in_crank" value="160" step="0.5" />
             <span class="unit">mm &mdash; matched to a crank-arm hole</span>
           </div>
         </div>
@@ -378,7 +394,7 @@
     <div>
       <div class="card">
         <h2>Target Settings</h2>
-        <p class="card-note">Height, stack and reach ride on bolts with a fixed track &mdash; tape-measure from BB centre and you'll land exactly on target. The saddle's fore/aft clamp and tilt bolt have no printed scale, so treat those two as estimates: set roughly, ride a lap, nudge to feel.</p>
+        <p class="card-note">Saddle height, handlebar height and handlebar reach are each printed with a letter scale (10mm per letter, A = shortest) &mdash; slide to the letter, no tape measure needed. The saddle's fore/aft clamp and tilt bolt have no scale, so those two are estimates: set roughly, ride a lap, nudge to feel.</p>
         <div id="steps"></div>
         <div id="dropNote"></div>
       </div>
@@ -405,7 +421,7 @@
     Sources: Zwift Ride Smart Frame Geometry chart (rider-supplied) &middot;
     <a href="https://support.zwift.com/en_us/adjusting-your-zwift-ride-SyUBRM8A" target="_blank" rel="noopener">Adjusting Your Zwift Ride</a> &middot;
     <a href="https://us.zwift.com/products/zwift-ride-adjustable-crank-arms" target="_blank" rel="noopener">Zwift Ride Adjustable Crank Arms</a>.
-    Measure with a tape from bottom-bracket centre while adjusting &mdash; none of the Ride's adjustments have printed numbers, only clamp bolts. The saddle fore/aft and tilt clamps are the roughest of the five since there's no fixed track to measure along.
+    Saddle height, handlebar height and handlebar reach are printed with a letter scale (10mm/letter) &mdash; slide to the target letter. The saddle fore/aft and tilt clamps have no scale at all, so those two are the roughest of the five: measure with a plumb line or level and expect to fine-tune by feel.
   </footer>
 </div>
 
@@ -434,6 +450,13 @@ const CONSTANTS = [
 
 const CRANK_OPTIONS = [160, 165, 170, 172.5, 175];
 
+// Seatpost and handlebar mast/mount are physically printed with letters at
+// 10mm spacing, A = the shortest position on each scale (confirmed on the
+// rider's own frame). The fore/aft rail clamp has no scale — it's plain,
+// and its usable travel is saddle-dependent.
+const LETTER_STEP_MM = 10;
+const RAIL_HALF_WINDOW = 17.5; // half of the nominal 35mm fore/aft rail travel, centred
+
 function status(value, min, max){
   if (value >= min && value <= max) return "good";
   const delta = value < min ? (min - value) : (value - max);
@@ -445,14 +468,61 @@ function fmt(n){
   return (Number.isInteger(r) ? r.toFixed(0) : r.toFixed(1));
 }
 
+// Zero-based index -> A, B, ... Z, AA, AB, ... (spreadsheet-column style).
+function letterFromIndex(n){
+  n = n + 1;
+  let s = '';
+  while (n > 0) {
+    n--;
+    s = String.fromCharCode(65 + (n % 26)) + s;
+    n = Math.floor(n / 26);
+  }
+  return s;
+}
+
+// Nearest printed letter mark for a target within [min,max], stepping every
+// LETTER_STEP_MM from A at `min`.
+function letterFor(target, min, max){
+  const clamped = Math.min(max, Math.max(min, target));
+  const idx = Math.max(0, Math.round((clamped - min) / LETTER_STEP_MM));
+  const markMM = min + idx * LETTER_STEP_MM;
+  return { letter: letterFromIndex(idx), markMM, residual: target - markMM };
+}
+
 function pill(st){
   if (st === 'info') return `<span class="status-pill info"><span class="sw"></span>Preference</span>`;
   const label = st === 'good' ? 'In range' : (st === 'warn' ? 'Borderline' : 'Out of range');
   return `<span class="status-pill ${st}"><span class="sw"></span>${label}</span>`;
 }
 
-// range/st/unit are optional — omit them for a preference-only step (e.g.
-// saddle tilt) that has no Zwift-defined range to check against.
+// Lettered step: big letter to slide to, plus the mm mark it corresponds to
+// vs. your raw target. `mark` is a {letter, markMM, residual} from letterFor().
+function letterStep(num, letter, title, sub, mark, target, range, st, howto, extraHtml){
+  const letterChip = `<span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">${letter}</span>`;
+  return `
+    <div class="step">
+      <div class="step-head">
+        <div class="step-title-row">
+          <span class="step-num">${num}</span>
+          <div>
+            <div class="step-title">${title} ${letterChip}</div>
+            <div class="step-sub">${sub}</div>
+          </div>
+        </div>
+        <div class="step-values">
+          <div class="vgroup"><div class="vlabel">Slide to</div><div class="num vnum" style="font-size:19px;">${mark.letter}</div></div>
+          <div class="vgroup"><div class="vlabel">Mark &middot; target</div><div class="num range">${fmt(mark.markMM)} &middot; ${fmt(target)}mm</div></div>
+          <div class="vgroup"><div class="vlabel">Ride range</div><div class="num range">${range}</div></div>
+          ${pill(st)}
+        </div>
+      </div>
+      <div class="step-howto">${howto}</div>
+      ${extraHtml || ''}
+    </div>
+  `;
+}
+
+// Plain step (no printed scale): mm or degrees, as before.
 function step(num, letter, title, sub, targetVal, range, st, howto, extraHtml, unit){
   unit = unit || 'mm';
   const rangeBlock = range
@@ -490,25 +560,38 @@ function render(){
   const tilt = parseFloat(document.getElementById('in_tilt').value) || 0;
   const crank = parseFloat(document.getElementById('in_crank').value) || 0;
 
-  // Saddle height (bolt, precise) and saddle fore/aft (rail clamp, no printed
-  // scale) are two separate, independent controls on the Ride.
+  // Saddle height (E), handlebar stack (D) and handlebar reach (C) each ride
+  // on their own lettered scale, 10mm/letter, A = shortest. Saddle fore/aft
+  // has no scale — it's the seatpost's height slide (fixed 73.5° angle,
+  // coupling X and Y together) plus a plain rail clamp with ~±17.5mm of
+  // independent, saddle-dependent fine-tune centred on wherever that lands.
   const eTarget = sh || Math.sqrt(sx * sx + sy * sy);
   const heightStatus = status(eTarget, HEIGHT.min, HEIGHT.max);
   const achievedE = Math.min(HEIGHT.max, Math.max(HEIGHT.min, eTarget));
-
-  const setbackStatus = status(sx, SETBACK.min, SETBACK.max);
-  const achievedB = Math.min(SETBACK.max, Math.max(SETBACK.min, sx));
+  const heightMark = letterFor(eTarget, HEIGHT.min, HEIGHT.max);
 
   const reachStatus = status(hx, REACH.min, REACH.max);
   const achievedC = Math.min(REACH.max, Math.max(REACH.min, hx));
+  const reachMark = letterFor(hx, REACH.min, REACH.max);
 
   const stackStatus = status(hy, STACK.min, STACK.max);
   const achievedD = Math.min(STACK.max, Math.max(STACK.min, hy));
+  const stackMark = letterFor(hy, STACK.min, STACK.max);
 
   const dropVal = achievedE - achievedD;
   const dropStatus = status(dropVal, DROP.min, DROP.max);
 
-  const setbackHowto = 'Loosen the saddle rail clamp and slide it fore/aft, viewed from the side. A tape pulled straight from BB to the saddle measures the diagonal (that\'s E, not this) &mdash; setback is the horizontal-only distance, so you need a plumb line to project both points onto the floor first. See below.';
+  // Height-priority: the seatpost slide is solved to match SY (biggest fit
+  // impact), which fixes a "neutral" setback the rail clamp then fine-tunes.
+  const tHeight = Math.min(1, Math.max(0, (sy - 579) / (830 - 579)));
+  const neutralB = SETBACK.min + tHeight * (SETBACK.max - SETBACK.min);
+  const railMin = neutralB - RAIL_HALF_WINDOW;
+  const railMax = neutralB + RAIL_HALF_WINDOW;
+  const achievedB = Math.min(railMax, Math.max(railMin, sx));
+  const setbackStatus = status(sx, railMin, railMax);
+  const setbackShortfall = sx - achievedB;
+
+  const setbackHowto = 'The height slide (step 1) already puts your saddle at roughly the setback below, centred in the rail clamp\'s travel. Loosen the clamp and fine-tune from there &mdash; a tape pulled straight from BB to the saddle measures the diagonal (that\'s E, not this), so use a plumb line for the horizontal-only distance. See below.';
   const setbackInfo = `
     <div class="plumb-diagram">
       <svg viewBox="0 0 400 168" role="img" aria-label="Diagram showing plumb lines dropped from the BB and saddle to the floor, with the horizontal distance between them measured as setback">
@@ -535,22 +618,24 @@ function render(){
         <li>Do the same from the saddle's 80mm-wide point (roughly where the saddle is widest near the nose).</li>
         <li>Tape-measure straight along the floor between the two marks &mdash; that distance is your setback. Slide the rail clamp until it matches, then retighten.</li>
       </ol>
-      <div class="diagram-caption">No printed scale on this clamp, so treat the number as an estimate and fine-tune by feel after a lap.</div>
+      <div class="diagram-caption">${setbackStatus === 'good'
+        ? `This is within the clamp's roughly &plusmn;${RAIL_HALF_WINDOW}mm travel around ${fmt(neutralB)}mm (centre from step 1's height), so it's reachable &mdash; exact range depends on your saddle's rails.`
+        : `The clamp's ~&plusmn;${RAIL_HALF_WINDOW}mm travel is centred around ${fmt(neutralB)}mm at this height, so the closest you can get is about ${fmt(achievedB)}mm &mdash; ${fmt(Math.abs(setbackShortfall))}mm ${setbackShortfall > 0 ? 'short of' : 'past'} your ${fmt(sx)}mm target. Slide the clamp fully to its ${setbackShortfall > 0 ? 'rearward' : 'forward'} limit to get there. Nominal travel is 35mm total but varies by saddle.`}</div>
     </div>
   `;
 
   const tiltHowto = 'Same rail clamp controls tilt. Match the angle with a smartphone level app (rest it on the saddle rails or top) &mdash; most clamps allow roughly &plusmn;3&deg; of adjustment.';
 
   const steps = [
-    step(1, 'E', 'Saddle Height', 'Tape-measure BB centre &rarr; saddle top', achievedE, `${HEIGHT.min}&ndash;${HEIGHT.max}`, heightStatus,
-      'Loosen the saddle-height bolt (rear of frame), slide the post, tape-measure from BB centre, retighten to 10&nbsp;Nm.'),
-    step(2, 'B', 'Saddle Fore/Aft', 'Setback, horizontal from BB', achievedB, `${SETBACK.min}&ndash;${SETBACK.max}`, setbackStatus,
+    letterStep(1, 'E', 'Saddle Height', 'Seatpost letter scale, A = lowest', heightMark, eTarget, `${HEIGHT.min}&ndash;${HEIGHT.max}`, heightStatus,
+      'Loosen the saddle-height bolt (rear of frame), slide the post until the reference mark lines up with the target letter, retighten to 10&nbsp;Nm.'),
+    step(2, 'B', 'Saddle Fore/Aft', 'Rail clamp, no scale &mdash; plumb-line it', achievedB, `${SETBACK.min}&ndash;${SETBACK.max}`, setbackStatus,
       setbackHowto, setbackInfo),
     step(3, '', 'Saddle Tilt', 'Nose angle', tilt, '', 'info', tiltHowto, '', '&deg;'),
-    step(4, 'D', 'Handlebar Height', 'Stack &mdash; vertical, measured from BB', achievedD, `${STACK.min}&ndash;${STACK.max}`, stackStatus,
-      'Loosen the bolt on the front leg, slide the stem mast up/down, retighten to 10&nbsp;Nm.'),
-    step(5, 'C', 'Handlebar Reach', 'Horizontal, measured from BB', achievedC, `${REACH.min}&ndash;${REACH.max}`, reachStatus,
-      'Pull the tray mat off, loosen the controller-mount bolt, slide fore/aft, retighten to 10&nbsp;Nm.'),
+    letterStep(4, 'D', 'Handlebar Height', 'Handlebar mast letter scale, A = lowest', stackMark, hy, `${STACK.min}&ndash;${STACK.max}`, stackStatus,
+      'Loosen the bolt on the front leg, slide the mast until the reference mark lines up with the target letter, retighten to 10&nbsp;Nm.'),
+    letterStep(5, 'C', 'Handlebar Reach', 'Handlebar mount letter scale, A = shortest', reachMark, hx, `${REACH.min}&ndash;${REACH.max}`, reachStatus,
+      'Pull the tray mat off, loosen the controller-mount bolt, slide until the reference mark lines up with the target letter, retighten to 10&nbsp;Nm.'),
   ];
   document.getElementById('steps').innerHTML = steps.join('');
 
