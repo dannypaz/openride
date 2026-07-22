@@ -191,6 +191,14 @@
     margin-top: 14px; font-size:12.5px; color: var(--ink-soft);
     padding-top: 14px; border-top: 1px solid var(--line);
   }
+  .plumb-diagram{
+    margin-top: 10px; padding: 12px 14px 8px; border-radius: 6px;
+    background: var(--steel-soft);
+  }
+  .plumb-diagram svg{ width:100%; height:auto; display:block; }
+  .plumb-diagram ol{ margin: 8px 0 2px; padding-left: 20px; font-size: 12.5px; color: var(--ink); }
+  .plumb-diagram ol li + li{ margin-top: 4px; }
+  .plumb-diagram .diagram-caption{ font-size:11px; color: var(--ink-soft); margin-top:2px; }
   .letter-chip{
     display:inline-flex; align-items:center; justify-content:center;
     width:22px; height:22px; border-radius:5px; background: var(--steel-soft);
@@ -459,8 +467,36 @@ function render(){
   const dropVal = achievedE - achievedD;
   const dropStatus = status(dropVal, DROP.min, DROP.max);
 
-  const setbackHowto = 'Loosen the saddle rail clamp and slide it fore/aft. No printed scale here — tape-measure horizontally from BB centre to the saddle’s 80mm-wide point and iterate until close, then retighten.';
-  const setbackInfo = `<div class="note-box info">Estimate, then verify by feel &mdash; this clamp has no marked positions, so expect a lap or two of fine-tuning.</div>`;
+  const setbackHowto = 'Loosen the saddle rail clamp and slide it fore/aft, viewed from the side. A tape pulled straight from BB to the saddle measures the diagonal (that\'s E, not this) &mdash; setback is the horizontal-only distance, so you need a plumb line to project both points onto the floor first. See below.';
+  const setbackInfo = `
+    <div class="plumb-diagram">
+      <svg viewBox="0 0 400 168" role="img" aria-label="Diagram showing plumb lines dropped from the BB and saddle to the floor, with the horizontal distance between them measured as setback">
+        <line x1="20" y1="140" x2="380" y2="140" style="stroke:var(--ink-soft);stroke-width:2" />
+        <line x1="120" y1="60" x2="120" y2="140" style="stroke:var(--ink-soft);stroke-width:1.5;stroke-dasharray:3,4" />
+        <line x1="262" y1="26" x2="262" y2="140" style="stroke:var(--accent);stroke-width:1.5;stroke-dasharray:3,4" />
+        <line x1="120" y1="60" x2="262" y2="26" style="stroke:var(--ink-soft);stroke-width:1.5;stroke-dasharray:1,5" />
+        <text x="191" y="38" text-anchor="middle" style="fill:var(--ink-soft);font-size:10px;font-style:italic">not this (that's E)</text>
+        <circle cx="120" cy="60" r="4" style="fill:var(--ink)" />
+        <text x="120" y="48" text-anchor="middle" style="fill:var(--ink);font-size:11px;font-weight:700">BB centre</text>
+        <circle cx="262" cy="26" r="4" style="fill:var(--accent)" />
+        <text x="262" y="16" text-anchor="middle" style="fill:var(--accent);font-size:11px;font-weight:700">Saddle 80mm-pt</text>
+        <line x1="120" y1="132" x2="120" y2="148" style="stroke:var(--ink-soft);stroke-width:2" />
+        <line x1="262" y1="132" x2="262" y2="148" style="stroke:var(--accent);stroke-width:2" />
+        <line x1="120" y1="158" x2="262" y2="158" style="stroke:var(--ink);stroke-width:2" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" />
+        <text id="setbackDiagramLabel" x="191" y="158" dy="-6" text-anchor="middle" style="fill:var(--ink);font-size:12px;font-weight:800;font-family:ui-monospace,monospace">185 mm</text>
+        <defs>
+          <marker id="arrowStart" markerWidth="8" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M7,1 L1,4 L7,7" style="fill:none;stroke:var(--ink);stroke-width:1.5" /></marker>
+          <marker id="arrowEnd" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1,1 L7,4 L1,7" style="fill:none;stroke:var(--ink);stroke-width:1.5" /></marker>
+        </defs>
+      </svg>
+      <ol>
+        <li>Hang a plumb line (string + a small weight, or a phone level app with a plumb-bob mode) from the BB axle centre until it hangs still, and mark that spot on the floor. The BB doesn't move, so you only need to do this once.</li>
+        <li>Do the same from the saddle's 80mm-wide point (roughly where the saddle is widest near the nose).</li>
+        <li>Tape-measure straight along the floor between the two marks &mdash; that distance is your setback. Slide the rail clamp until it matches, then retighten.</li>
+      </ol>
+      <div class="diagram-caption">No printed scale on this clamp, so treat the number as an estimate and fine-tune by feel after a lap.</div>
+    </div>
+  `;
 
   const tiltHowto = 'Same rail clamp controls tilt. Match the angle with a smartphone level app (rest it on the saddle rails or top) &mdash; most clamps allow roughly &plusmn;3&deg; of adjustment.';
 
@@ -476,6 +512,9 @@ function render(){
       'Pull the tray mat off, loosen the controller-mount bolt, slide fore/aft, retighten to 10&nbsp;Nm.'),
   ];
   document.getElementById('steps').innerHTML = steps.join('');
+
+  const diagLabel = document.getElementById('setbackDiagramLabel');
+  if (diagLabel) diagLabel.textContent = `${fmt(achievedB)} mm`;
 
   if (sh) {
     document.getElementById('shCompare').innerHTML =
