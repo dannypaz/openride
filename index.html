@@ -262,6 +262,47 @@
     </div>
   </div>
 
+  <div class="card" style="margin-bottom:24px;">
+    <details class="reference">
+      <summary>How the targets are calculated (for adapting this to your own numbers)</summary>
+      <div style="margin-top:14px;">
+        <p class="card-note" style="margin-bottom:12px;">
+          Most professional fits report your position as BB&#8209;relative X/Y &mdash;
+          horizontal and vertical distance from the bottom&nbsp;bracket centre.
+          Zwift's own geometry chart for the Ride uses that <b>same</b> coordinate
+          system, just under different letters, so the numbers carry over with
+          no conversion:
+        </p>
+        <div class="overflow-x">
+        <table class="const-table" style="margin-bottom:12px;">
+          <thead>
+            <tr><th>Target</th><th>Formula</th><th>Ride range</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">E</span> Saddle Height</td><td class="num">fit's saddle height, or &radic;(SX&sup2;+SY&sup2;)</td><td class="num range">599&ndash;865mm</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">B</span> Saddle Fore/Aft</td><td class="num">= SX</td><td class="num range">147&ndash;251mm</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">C</span> Handlebar Reach</td><td class="num">= HX</td><td class="num range">390&ndash;510mm</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">D</span> Handlebar Stack</td><td class="num">= HY</td><td class="num range">600&ndash;761mm</td></tr>
+            <tr><td><span class="letter-chip" style="width:18px;height:18px;font-size:10.5px;">F</span> Saddle&rarr;Bar Drop</td><td class="num">= E &minus; D (clamped)</td><td class="num range">21&ndash;69mm</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="card-note" style="margin-bottom:0;">
+          Each target is clamped to its range, then compared against your raw
+          input: <b>in range</b> if it fits directly, <b>borderline</b> if it
+          misses by &le;15mm (you'll rack to the limit stop), <b>out of range</b>
+          beyond that. Saddle tilt has no Zwift-defined range, so it's passed
+          through as-is and flagged "Preference." Crank length is matched to the
+          nearest of the Adjustable Crank Arms' five holes (160/165/170/172.5/175mm).
+          All of these numbers &mdash; and the Ride's own fixed ranges above &mdash;
+          live as plain constants at the top of the page's script, so you can
+          repoint them at a different frame or a revised geometry chart. Full
+          writeup in this repo's <code>README.md</code>.
+        </p>
+      </div>
+    </details>
+  </div>
+
   <div class="grid">
 
     <!-- LEFT: INPUTS -->
